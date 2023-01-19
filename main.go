@@ -26,35 +26,41 @@ func makeRequestAndParseResponse(requestURL string) {
 		os.Exit(1)
 	}
 
-	parseAndPrintResponse(res)
+	doc, err := html.Parse(res.Body)
+	if err != nil {
+		fmt.Printf("clientl: error parsing http response: %s\n", err)
+		os.Exit(1)
+	}
 
+	var data []string
+
+	doTraverse(doc, &data, "div")
+	fmt.Println(data)
 }
 
-func parseAndPrintResponse(response *http.Response) {
-	tokenizedResponse := html.NewTokenizer(response.Body)
+func doTraverse(doc *html.Node, data *[]string, tag string) {
 
-	for {
-		nextToken := tokenizedResponse.Next()
+	var traverse func(n *html.Node, tag string) *html.Node
 
-		switch {
-		case nextToken == html.ErrorToken:
-			// End of the document, we're done
-			fmt.Printf("EOF reached: %v\n", nextToken)
-			return
-		case nextToken == html.StartTagToken:
-			linkToken := tokenizedResponse.Token()
+	traverse = func(n *html.Node, tag string) *html.Node {
 
-			isAnchor := linkToken.Data == "a"
-			if isAnchor {
-				fmt.Printf("Next Token found %v\n", linkToken)
-				fmt.Println("We found a link!")
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+
+			if c.Type == html.TextNode && c.Parent.Data == tag {
+
+				*data = append(*data, c.Data)
 			}
-			for _, a := range linkToken.Attr {
-				if a.Key == "href" {
-					fmt.Println("Found href:", a.Val)
-					break
-				}
+
+			res := traverse(c, tag)
+
+			if res != nil {
+
+				return res
 			}
 		}
+
+		return nil
 	}
+
+	traverse(doc, tag)
 }
