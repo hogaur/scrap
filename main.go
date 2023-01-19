@@ -12,10 +12,15 @@ import (
 
 func main() {
 	requestURL := "https://www.theproductfolks.com/100-product-managers"
-	makeRequestAndParseResponse(requestURL)
+	pmCardPattern := "tpf-100-pms-card-details-wrap"
+	currentRolePattern := "tpf-100-pms-card-role-text"
+	previousRolePattern := "tpf-100-pms-card-old-role"
+	doc := makeRequestAndParseResponse(requestURL)
+	allPms := findAllPmsFromNode(doc, pmCardPattern, currentRolePattern, previousRolePattern)
+	fmt.Println(len(allPms))
 }
 
-func makeRequestAndParseResponse(requestURL string) {
+func makeRequestAndParseResponse(requestURL string) *html.Node {
 	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
 		fmt.Printf("client: could not create request: %s\n", err)
@@ -34,30 +39,21 @@ func makeRequestAndParseResponse(requestURL string) {
 		os.Exit(1)
 	}
 
-	pmNodes := doTraverse(doc, "div", "tpf-100-pms-card-details-wrap")
+	return doc
+}
+
+func findAllPmsFromNode(doc *html.Node, pmCardPattern, currentRolePattern, previousRolePattern string) []pm.Pm {
+	pmNodes := doTraverse(doc, "div", pmCardPattern)
 	var allPms []pm.Pm
 	for _, pmNode := range pmNodes {
 		name := pmNode.FirstChild.FirstChild.Data
+		currentRole := findRoleFromNode(pmNode, currentRolePattern)
+		previousRole := findRoleFromNode(pmNode, previousRolePattern)
 
-		currentRoleNodes := doTraverse(pmNode, "div", "tpf-100-pms-card-role-text")
-		currentRole := ""
-		for _, currentRoleNode := range currentRoleNodes {
-			if currentRoleNode.FirstChild != nil {
-				currentRole = fmt.Sprintf("%v%v", currentRole, currentRoleNode.FirstChild.Data)
-			}
-		}
-
-		previousRoleNodes := doTraverse(pmNode, "div", "tpf-100-pms-card-old-role")
-		previousRole := ""
-		for _, previousRoleNode := range previousRoleNodes {
-			if previousRoleNode.FirstChild != nil {
-				previousRole = fmt.Sprintf("%v%v", previousRole, previousRoleNode.FirstChild.Data)
-			}
-		}
-		pm := pm.BuildPmInfo(name, currentRole, previousRole)
-		allPms = pm.AddPmToList(allPms)
-		fmt.Println(len(allPms))
+		p := pm.BuildPmInfo(name, currentRole, previousRole)
+		allPms = p.AddPmToList(allPms)
 	}
+	return allPms
 }
 
 func doTraverse(doc *html.Node, tag string, pattern string) []*html.Node {
@@ -87,4 +83,15 @@ func doTraverse(doc *html.Node, tag string, pattern string) []*html.Node {
 
 	traverse(doc, tag)
 	return pmNodes
+}
+
+func findRoleFromNode(pmNode *html.Node, pattern string) string {
+	roleNodes := doTraverse(pmNode, "div", pattern)
+	role := ""
+	for _, roleNode := range roleNodes {
+		if roleNode.FirstChild != nil {
+			role = fmt.Sprintf("%v%v", role, roleNode.FirstChild.Data)
+		}
+	}
+	return role
 }
