@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"golang.org/x/net/html"
 )
@@ -32,29 +33,50 @@ func makeRequestAndParseResponse(requestURL string) {
 		os.Exit(1)
 	}
 
-	var data []string
+	pmNodes := doTraverse(doc, "div", "tpf-100-pms-card-details-wrap")
+	fmt.Println(pmNodes)
+	fmt.Println(len(pmNodes))
+	for _, pmNode := range pmNodes {
+		fmt.Println(pmNode.FirstChild.FirstChild.Data)
 
-	doTraverse(doc, &data, "div")
-	fmt.Println(data)
+		currentRoleNodes := doTraverse(pmNode, "div", "tpf-100-pms-card-role-text")
+		currentRole := ""
+		for _, currentRoleNode := range currentRoleNodes {
+			if currentRoleNode.FirstChild != nil {
+				currentRole = fmt.Sprintf("%v%v", currentRole, currentRoleNode.FirstChild.Data)
+			}
+		}
+		fmt.Println(currentRole)
+
+		previousRoleNodes := doTraverse(pmNode, "div", "tpf-100-pms-card-old-role")
+		previousRole := ""
+		for _, previousRoleNode := range previousRoleNodes {
+			if previousRoleNode.FirstChild != nil {
+				previousRole = fmt.Sprintf("%v%v", previousRole, previousRoleNode.FirstChild.Data)
+			}
+		}
+		fmt.Println(previousRole)
+	}
 }
 
-func doTraverse(doc *html.Node, data *[]string, tag string) {
-
+func doTraverse(doc *html.Node, tag string, pattern string) []*html.Node {
+	var pmNodes []*html.Node
 	var traverse func(n *html.Node, tag string) *html.Node
+	attr := "class"
 
 	traverse = func(n *html.Node, tag string) *html.Node {
-
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 
-			if c.Type == html.TextNode && c.Parent.Data == tag {
-
-				*data = append(*data, c.Data)
+			if c.Data == tag {
+				for _, a := range c.Attr {
+					if a.Key == attr && strings.Contains(a.Val, pattern) {
+						pmNodes = append(pmNodes, c)
+					}
+				}
 			}
-
 			res := traverse(c, tag)
 
 			if res != nil {
-
 				return res
 			}
 		}
@@ -63,4 +85,5 @@ func doTraverse(doc *html.Node, data *[]string, tag string) {
 	}
 
 	traverse(doc, tag)
+	return pmNodes
 }
