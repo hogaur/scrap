@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"scrappergo/pm"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -36,8 +37,10 @@ func makeRequestAndParseResponse(requestURL string) {
 	pmNodes := doTraverse(doc, "div", "tpf-100-pms-card-details-wrap")
 	fmt.Println(pmNodes)
 	fmt.Println(len(pmNodes))
+	var allPms []pm.Pm
 	for _, pmNode := range pmNodes {
-		fmt.Println(pmNode.FirstChild.FirstChild.Data)
+		name := pmNode.FirstChild.FirstChild.Data
+		fmt.Println(name)
 
 		currentRoleNodes := doTraverse(pmNode, "div", "tpf-100-pms-card-role-text")
 		currentRole := ""
@@ -56,6 +59,9 @@ func makeRequestAndParseResponse(requestURL string) {
 			}
 		}
 		fmt.Println(previousRole)
+		pm := pm.BuildPmInfo(name, currentRole, previousRole)
+		allPms = append(allPms, pm)
+		fmt.Println(allPms)
 	}
 }
 
