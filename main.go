@@ -35,12 +35,9 @@ func makeRequestAndParseResponse(requestURL string) {
 	}
 
 	pmNodes := doTraverse(doc, "div", "tpf-100-pms-card-details-wrap")
-	fmt.Println(pmNodes)
-	fmt.Println(len(pmNodes))
 	var allPms []pm.Pm
 	for _, pmNode := range pmNodes {
 		name := pmNode.FirstChild.FirstChild.Data
-		fmt.Println(name)
 
 		currentRoleNodes := doTraverse(pmNode, "div", "tpf-100-pms-card-role-text")
 		currentRole := ""
@@ -49,7 +46,6 @@ func makeRequestAndParseResponse(requestURL string) {
 				currentRole = fmt.Sprintf("%v%v", currentRole, currentRoleNode.FirstChild.Data)
 			}
 		}
-		fmt.Println(currentRole)
 
 		previousRoleNodes := doTraverse(pmNode, "div", "tpf-100-pms-card-old-role")
 		previousRole := ""
@@ -58,10 +54,9 @@ func makeRequestAndParseResponse(requestURL string) {
 				previousRole = fmt.Sprintf("%v%v", previousRole, previousRoleNode.FirstChild.Data)
 			}
 		}
-		fmt.Println(previousRole)
 		pm := pm.BuildPmInfo(name, currentRole, previousRole)
-		allPms = append(allPms, pm)
-		fmt.Println(allPms)
+		allPms = pm.AddPmToList(allPms)
+		fmt.Println(len(allPms))
 	}
 }
 
