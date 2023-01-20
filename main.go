@@ -18,6 +18,7 @@ func main() {
 	doc := makeRequestAndParseResponse(requestURL)
 	allPms := findAllPmsFromNode(doc, pmCardPattern, currentRolePattern, previousRolePattern)
 	fmt.Println(len(allPms))
+	fmt.Println(pm.AllCompaniesFromTopPmsList(allPms))
 }
 
 func makeRequestAndParseResponse(requestURL string) *html.Node {

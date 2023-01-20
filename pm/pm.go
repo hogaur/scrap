@@ -43,3 +43,15 @@ func (p TopPm) AddPmToList(pms []TopPm) []TopPm {
 	pms = append(pms, p)
 	return pms
 }
+
+func AllCompaniesFromTopPmsList(pms []TopPm) (companies []string) {
+	for _, pm := range pms {
+		if pm.CurrentRole.Company != "" {
+			companies = append(companies, pm.CurrentRole.Company)
+		}
+		if len(pm.PreviousRoles) > 0 {
+			companies = append(companies, pm.PreviousRoles...)
+		}
+	}
+	return companies
+}
