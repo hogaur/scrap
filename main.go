@@ -42,18 +42,29 @@ func makeRequestAndParseResponse(requestURL string) *html.Node {
 	return doc
 }
 
-func findAllPmsFromNode(doc *html.Node, pmCardPattern, currentRolePattern, previousRolePattern string) []pm.Pm {
+func findAllPmsFromNode(doc *html.Node, pmCardPattern, currentRolePattern, previousRolePattern string) []pm.TopPm {
 	pmNodes := findDivsWithClassPattern(doc, pmCardPattern)
-	var allPms []pm.Pm
+	var allPms []pm.TopPm
 	for _, pmNode := range pmNodes {
 		name := pmNode.FirstChild.FirstChild.Data
 		currentRole := findRoleFromNode(pmNode, currentRolePattern)
 		previousRole := findRoleFromNode(pmNode, previousRolePattern)
 
-		p := pm.BuildPmInfo(name, currentRole, previousRole)
+		p := pm.NewTopPm(name, currentRole, previousRole)
 		allPms = p.AddPmToList(allPms)
 	}
 	return allPms
+}
+
+func findRoleFromNode(pmNode *html.Node, pattern string) string {
+	roleNodes := findDivsWithClassPattern(pmNode, pattern)
+	role := ""
+	for _, roleNode := range roleNodes {
+		if roleNode.FirstChild != nil {
+			role = fmt.Sprintf("%v%v", role, roleNode.FirstChild.Data)
+		}
+	}
+	return role
 }
 
 func findDivsWithClassPattern(doc *html.Node, pattern string) []*html.Node {
@@ -84,15 +95,4 @@ func findDivsWithClassPattern(doc *html.Node, pattern string) []*html.Node {
 
 	traverse(doc, tag)
 	return pmNodes
-}
-
-func findRoleFromNode(pmNode *html.Node, pattern string) string {
-	roleNodes := findDivsWithClassPattern(pmNode, pattern)
-	role := ""
-	for _, roleNode := range roleNodes {
-		if roleNode.FirstChild != nil {
-			role = fmt.Sprintf("%v%v", role, roleNode.FirstChild.Data)
-		}
-	}
-	return role
 }

@@ -1,16 +1,40 @@
 package pm
 
-type Pm struct {
+import "strings"
+
+type TopPm struct {
 	Name          string
-	CurrentRole   string
-	PreviousRoles string
+	CurrentRole   CurrentRole
+	PreviousRoles []string
 }
 
-func BuildPmInfo(name string, currentRole string, previousRoles string) Pm {
-	return Pm{Name: name, CurrentRole: currentRole, PreviousRoles: previousRoles}
+type CurrentRole struct {
+	Position string
+	Detail   string
+	Company  string
 }
 
-func (p Pm) AddPmToList(pms []Pm) []Pm {
+func NewTopPm(name string, currentRole string, previousRoles string) TopPm {
+	position, detail, company := currentRoleDissection(currentRole)
+	return TopPm{
+		Name:          name,
+		CurrentRole:   CurrentRole{Position: position, Detail: detail, Company: company},
+		PreviousRoles: strings.Split(previousRoles, ",")}
+}
+
+func currentRoleDissection(currentRole string) (position, detail, company string) {
+	currentRoleArray := strings.Split(currentRole, ",")
+	currentRoleSize := len(currentRoleArray)
+	company = currentRoleArray[currentRoleSize-1]
+	position = currentRoleArray[0]
+	detail = ""
+	if currentRoleSize > 2 {
+		detail = currentRoleArray[1]
+	}
+	return position, detail, company
+}
+
+func (p TopPm) AddPmToList(pms []TopPm) []TopPm {
 	for _, pm := range pms {
 		if p.Name == pm.Name {
 			return pms
