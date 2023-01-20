@@ -43,7 +43,7 @@ func makeRequestAndParseResponse(requestURL string) *html.Node {
 }
 
 func findAllPmsFromNode(doc *html.Node, pmCardPattern, currentRolePattern, previousRolePattern string) []pm.Pm {
-	pmNodes := doTraverse(doc, "div", pmCardPattern)
+	pmNodes := findDivsWithClassPattern(doc, pmCardPattern)
 	var allPms []pm.Pm
 	for _, pmNode := range pmNodes {
 		name := pmNode.FirstChild.FirstChild.Data
@@ -56,7 +56,8 @@ func findAllPmsFromNode(doc *html.Node, pmCardPattern, currentRolePattern, previ
 	return allPms
 }
 
-func doTraverse(doc *html.Node, tag string, pattern string) []*html.Node {
+func findDivsWithClassPattern(doc *html.Node, pattern string) []*html.Node {
+	tag := "div"
 	var pmNodes []*html.Node
 	var traverse func(n *html.Node, tag string) *html.Node
 	attr := "class"
@@ -86,7 +87,7 @@ func doTraverse(doc *html.Node, tag string, pattern string) []*html.Node {
 }
 
 func findRoleFromNode(pmNode *html.Node, pattern string) string {
-	roleNodes := doTraverse(pmNode, "div", pattern)
+	roleNodes := findDivsWithClassPattern(pmNode, pattern)
 	role := ""
 	for _, roleNode := range roleNodes {
 		if roleNode.FirstChild != nil {
